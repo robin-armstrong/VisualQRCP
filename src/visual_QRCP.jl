@@ -51,7 +51,7 @@ function visualQRCP(A::Matrix{F} ; tol::Float64 = 0., silent::Bool = false) wher
 		if(!silent)
 			# display the current state of the factorization
 			run(Cmd(["clear"]))
-			println("PERMUTATION | SQUARED COLUMN NORMS")
+			println("permutation | squared column norms")
 			println("----------------------------------")
 			
 			for j = 1:n
@@ -62,6 +62,7 @@ function visualQRCP(A::Matrix{F} ; tol::Float64 = 0., silent::Bool = false) wher
 			display(Q)
 			println("\nR = ")
 			display(R)
+			println("\n press enter to continue...")
 			
 			readline()
 		end
@@ -126,7 +127,7 @@ function visualQRCP(A::Matrix{F} ; tol::Float64 = 0., silent::Bool = false) wher
 		if(!silent)
 			# display the final state of the factorization
 			run(Cmd(["clear"]))
-			println("PERMUTATION | SQUARED COLUMN NORMS")
+			println("permutation | squared column norms")
 			println("----------------------------------")
 			
 			for j = 1:n
@@ -137,6 +138,7 @@ function visualQRCP(A::Matrix{F} ; tol::Float64 = 0., silent::Bool = false) wher
 			display(Q)
 			println("\nR = ")
 			display(R)
+			println("\n press enter to continue...")
 			
 			readline()
 		end
