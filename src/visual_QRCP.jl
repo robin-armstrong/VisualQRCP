@@ -24,11 +24,11 @@ end
 
 
 """
-	visualQRCP(A ; tol = 0., silent = false)
+	visualQRCP(A ; tol = 0., silent = false, showNorms = false)
 	
-Compute a Golub-Businger style QRCP of `A`, showing every step if `silent == false`. Terminate the algorithm when the largest remaining column norm is no greater than `tol`.
+Compute a Golub-Businger style QRCP of `A`, showing all intermediate factorizations unless `silent == true`. Terminate the algorithm when the largest remaining column norm is no greater than `tol`. If `showNorms == true` then also display updates to the column norms.
 """
-function visualQRCP(A::Matrix{F} ; tol::Float64 = 0., silent::Bool = false) where {F <: Real}
+function visualQRCP(A::Matrix{F} ; tol::Float64 = 0., silent::Bool = false, showNorms::Bool = false) where {F <: Real}
 	m, n = size(A)
 	perm = Array{Int64}(range(1, n, n))
 	Q = Matrix{Float64}(I(m))
@@ -51,18 +51,29 @@ function visualQRCP(A::Matrix{F} ; tol::Float64 = 0., silent::Bool = false) wher
 		if(!silent)
 			# display the current state of the factorization
 			run(Cmd(["clear"]))
-			println("permutation | squared column norms")
-			println("----------------------------------")
 			
-			for j = 1:n
-				@printf("     %2d     |      %8.2e       \n", perm[j], sqnorms[j])
+			if(showNorms)
+				println("permutation | squared column norms")
+				println("----------------------------------")
+				
+				for j = 1:n
+					@printf("     %2d     |      %8.2e       \n", perm[j], sqnorms[j])
+				end
+			else
+				println("permutation:")
+				
+				for j = 1:n - 1
+					print(perm[j],", ")
+				end
+				
+				println(perm[n])
 			end
 			
-			println("\nQ = ")
+			println("\nQ factor:")
 			display(Q)
-			println("\nR = ")
+			println("\nR factor:")
 			display(R)
-			println("\n press enter to continue...")
+			println("\npress enter to continue...")
 			
 			readline()
 		end
@@ -127,18 +138,29 @@ function visualQRCP(A::Matrix{F} ; tol::Float64 = 0., silent::Bool = false) wher
 		if(!silent)
 			# display the final state of the factorization
 			run(Cmd(["clear"]))
-			println("permutation | squared column norms")
-			println("----------------------------------")
 			
-			for j = 1:n
-				@printf("     %2d     |      %8.2e       \n", perm[j], sqnorms[j])
+			if(showNorms)
+				println("permutation | squared column norms")
+				println("----------------------------------")
+				
+				for j = 1:n
+					@printf("     %2d     |      %8.2e       \n", perm[j], sqnorms[j])
+				end
+			else
+				println("permutation:")
+				
+				for j = 1:n - 1
+					print(perm[j],", ")
+				end
+				
+				println(perm[n])
 			end
 			
-			println("\nQ = ")
+			println("\nQ factor:")
 			display(Q)
-			println("\nR = ")
+			println("\nR factor:")
 			display(R)
-			println("\n press enter to continue...")
+			println("\npress enter to continue...")
 			
 			readline()
 		end
