@@ -2,6 +2,6 @@ module VisualQRCP
 
 export QRCP, visualQRCP
 
-include("visual_QRCP.jl")
+include("functionsrc.jl")
 
 end
