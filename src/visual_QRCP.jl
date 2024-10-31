@@ -1,5 +1,6 @@
 using LinearAlgebra
 using Printf
+using NPZ
 
 struct QRCP
 	Q::Matrix{Float64}
@@ -24,18 +25,30 @@ end
 
 
 """
-	visualQRCP(A ; tol = 0., silent = false, showNorms = false)
+	visualQRCP(A ; silent = false, showNorms = false, save = false, dest = "qrcp_hist")
 	
-Compute a Golub-Businger style QRCP of `A`, showing all intermediate factorizations unless `silent == true`. Terminate the algorithm when the largest remaining column norm is no greater than `tol`. If `showNorms == true` then also display updates to the column norms.
+Compute a Golub-Businger style QRCP of `A`, showing all intermediate factorizations unless `silent == true`. If `showNorms == true` then also display updates to the column norms. If `save == true`, then save the factorization history to file paths prefixed by `dest`.
 """
-function visualQRCP(A::Matrix{F} ; tol::Float64 = 0., silent::Bool = false, showNorms::Bool = false) where {F <: Real}
+function visualQRCP(A::Matrix{F}; 
+					silent::Bool = false, 
+					showNorms::Bool = false, 
+					save::Bool = false,
+					dest::String = "qrcp_hist") where {F <: Real}
 	m, n = size(A)
+	d = min(m, n)
+	q = (m < n) ? 0 : 1
 	perm = Array{Int64}(range(1, n, n))
 	Q = Matrix{Float64}(I(m))
 	R = Matrix{Float64}(A)
 	sqnorms = Vector{Float64}(undef, n)
-	sqnorm_max = tol
+	sqnorm_max = 0.
 	jmax = 0
+
+	if(save)
+		Qhist = zeros(d+q, m, m)
+		Rhist = zeros(d+q, m, n)
+		Phist = zeros(Int64, d+q, n)
+	end
 	
 	for j = 1:n
 		sqnorms[j] = norm(R[:, j])^2
@@ -47,7 +60,7 @@ function visualQRCP(A::Matrix{F} ; tol::Float64 = 0., silent::Bool = false, show
 	
 	k = 1
 	
-	while(k < min(m, n))
+	while(k < d+q)
 		if(!silent)
 			# display the current state of the factorization
 			run(Cmd(["clear"]))
@@ -78,8 +91,12 @@ function visualQRCP(A::Matrix{F} ; tol::Float64 = 0., silent::Bool = false, show
 			readline()
 		end
 		
-		(sqnorm_max > tol) || break
-		
+		if(save)
+			Qhist[k, :, :] = Q
+			Rhist[k, :, :] = R
+			Phist[k, :] = perm
+		end
+
 		# swapping columns
 		
 		tmp = perm[k]
@@ -113,7 +130,7 @@ function visualQRCP(A::Matrix{F} ; tol::Float64 = 0., silent::Bool = false, show
 		
 		# updating column norms
 		
-		sqnorm_max = tol
+		sqnorm_max = 0.
 		jmax = 0
 		
 		for j = k + 1:n
@@ -129,41 +146,52 @@ function visualQRCP(A::Matrix{F} ; tol::Float64 = 0., silent::Bool = false, show
 		k += 1
 	end
 	
-	if(sqnorm_max > tol)
-		# final update to maintain a nonnegative diagonal on R
+	# final update to maintain a nonnegative diagonal on R
+	
+	if(k <= min(m, n))
 		s = (R[k, k] >= 0) ? 1 : -1
 		R[k, k:n] *= s
 		Q[:, k] *= s
+	end
+	
+	if(!silent)
+		# display the final state of the factorization
+		run(Cmd(["clear"]))
 		
-		if(!silent)
-			# display the final state of the factorization
-			run(Cmd(["clear"]))
+		if(showNorms)
+			println("permutation | squared column norms")
+			println("----------------------------------")
 			
-			if(showNorms)
-				println("permutation | squared column norms")
-				println("----------------------------------")
-				
-				for j = 1:n
-					@printf("     %2d     |      %8.2e       \n", perm[j], sqnorms[j])
-				end
-			else
-				println("permutation:")
-				
-				for j = 1:n - 1
-					print(perm[j],", ")
-				end
-				
-				println(perm[n])
+			for j = 1:n
+				@printf("     %2d     |      %8.2e       \n", perm[j], sqnorms[j])
+			end
+		else
+			println("permutation:")
+			
+			for j = 1:n - 1
+				print(perm[j],", ")
 			end
 			
-			println("\nQ factor:")
-			display(Q)
-			println("\nR factor:")
-			display(R)
-			println("\npress enter to continue...")
-			
-			readline()
+			println(perm[n])
 		end
+		
+		println("\nQ factor:")
+		display(Q)
+		println("\nR factor:")
+		display(R)
+		println("\npress enter to continue...")
+		
+		readline()
+	end
+
+	if(save)
+		Qhist[k, :, :] = Q
+		Rhist[k, :, :] = R
+		Phist[k, :] = perm
+
+		npzwrite(dest*"_Q.npy", Qhist)
+		npzwrite(dest*"_R.npy", Rhist)
+		npzwrite(dest*"_P.npy", Phist)
 	end
 	
 	return QRCP(Q, R, perm)
